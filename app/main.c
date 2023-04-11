@@ -10,7 +10,6 @@ int main() {
     int answers_size = 0;
     while(working) {
         int menu = 0;
-        int clear = 0;
         char path[100];
         printf("Menu:\n1 - Play\n2 - Show tree\n3 - Load\n4 - Save\n5 - Exit\n");
         while(!scanf("%d", &menu) || menu < 1 || menu > 5) {
@@ -59,6 +58,7 @@ int main() {
         }
     }
     if(root != NULL) {
+        free(answers);
         clearmemory(root);
     }
     return 0;

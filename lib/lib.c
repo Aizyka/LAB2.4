@@ -3,7 +3,7 @@
 #include <string.h>
 #include "../include/lib.h"
 
-Node* createNode(char* question) {
+Node* createNode(const char* question) {
     Node* node = (Node*) malloc(sizeof(Node));
     node->question = strdup(question);
     node->yes = NULL;
@@ -11,7 +11,7 @@ Node* createNode(char* question) {
     return node;
 }
 
-void insert(Node* node, char* question, char* answer) {
+void insert(Node* node, const char* question, const char* answer) {
     if (strcmp(answer, "yes") == 0) {
         if (node->yes == NULL) {
             node->yes = createNode(question);
@@ -89,29 +89,33 @@ void saveToFile(FILE* fp, Node* node) {
     fprintf(fp, "}");
 }
 
-void save(Node* root, char* filename) {
+void save(Node* root, const char* filename) {
     FILE* fp = fopen(filename, "w");
-    saveToFile(fp, root);
-    fclose(fp);
+    if(fp != NULL) {
+        saveToFile(fp, root);
+        fclose(fp);
+    }
 }
 
-Node* parse_node(char* line) {
-    char* questionStart = strstr(line, "\":\"");
+Node* parse_node(const char* line) {
+    const char* questionStart = strstr(line, "\":\"");
     if (questionStart == NULL) {
         return NULL;
     }
     questionStart += 3;
-    char* questionEnd = strchr(questionStart, '\"');
+    const char* questionEnd = strchr(questionStart, '\"');
     if (questionEnd == NULL) {
         return NULL;
     }
     char* question = strndup(questionStart, questionEnd - questionStart);
-    Node* node = createNode(question);
-    char* yesStart = strstr(line, "\"yes\":{");
-    if (yesStart != NULL && strcmp(strndup(questionEnd+3, 3),"yes") == 0) {
-        int end = strlen(yesStart);
+    Node* node = createNode(strdup(question));
+    free(question);
+    const char* yesStart = strstr(line, "\"yes\":{");
+    char* tocheck = strndup(questionEnd+3, 3);
+    if (yesStart != NULL && strcmp(tocheck,"yes") == 0) {
+        int end = (int)strlen(yesStart);
         int c = 0;
-        for(int i = 0; i < strlen(yesStart); i++) {
+        for(int i = 0; i < (int)strlen(yesStart); i++) {
             if(yesStart[i] == '{')
                 c++;
             if(yesStart[i] == '}') {
@@ -129,11 +133,11 @@ Node* parse_node(char* line) {
         }
         char* afterYes = calloc(strlen(line)-end-2, sizeof(char));
         strncpy(afterYes, yesStart+end+2, strlen(line)-end-2);
-        char* noStart = strstr(afterYes, "\"no\":{");
+        const char* noStart = strstr(afterYes, "\"no\":{");
         if (noStart != NULL) {
-            int end = strlen(noStart);
+            int end = (int)strlen(noStart);
             int c = 0;
-            for(int i = 0; i < strlen(noStart); i++) {
+            for(int i = 0; i < (int)strlen(noStart); i++) {
                 if(noStart[i] == '{')
                     c++;
                 if(noStart[i] == '}') {
@@ -152,11 +156,11 @@ Node* parse_node(char* line) {
         }
     }
     else {
-        char* noStart = strstr(line, "\"no\":{");
+        const char* noStart = strstr(line, "\"no\":{");
         if (noStart != NULL) {
-            int end = strlen(noStart);
+            int end = (int)strlen(noStart);
             int c = 0;
-            for(int i = 0; i < strlen(noStart); i++) {
+            for(int i = 0; i < (int)strlen(noStart); i++) {
                 if(noStart[i] == '{')
                     c++;
                 if(noStart[i] == '}') {
@@ -174,6 +178,7 @@ Node* parse_node(char* line) {
             }
         }
     }
+    free(tocheck);
     return node;
 }
 
@@ -187,7 +192,7 @@ Node* loadFromFile(FILE* fp) {
     return parse_node(line);
 }
 
-Node* load(char* filename) {
+Node* load(const char* filename) {
     FILE* fp = fopen(filename, "r");
     if(fp == NULL) {
         printf("\033[31mError! File not found\033[0m\n");
