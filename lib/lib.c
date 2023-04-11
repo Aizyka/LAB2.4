@@ -54,9 +54,9 @@ void play(Node* node, Node*** answers, int* answers_size) {
             printf("Я проиграл. Что это было?\n");
             char newObject[100];
             char newQuestion[100];
-            scanf("%s", newObject);
+            scanf("%99s", newObject);
             printf("Напишите вопрос, который можно задать, чтобы отличить %s от %s:\n", newObject, node->question);
-            scanf(" %[^\n]s", newQuestion);
+            scanf("%99s", newQuestion);
             char temp[100];
             strcpy(temp, node->question);
             free(node->question);
