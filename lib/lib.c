@@ -129,9 +129,10 @@ void parse(const char* yesStart, const char* tocheck, const char* line, Node** n
         char* afterYes = calloc(strlen(line)-end-2, sizeof(char));
         strncpy(afterYes, yesStart+end+2, strlen(line)-end-2);
         const char* noStart = strstr(afterYes, "\"no\":{");
+        free(afterYes);
         if (noStart != NULL) {
             end = getend(noStart);
-            char* noEnd = calloc(end-5, sizeof(char));
+            char* noEnd = calloc(end-4, sizeof(char));
             strncpy(noEnd, noStart+5, end - 4);
             if (noEnd != NULL) {
                 (*node)->no = parse_node(noEnd);
@@ -154,6 +155,8 @@ void parse(const char* yesStart, const char* tocheck, const char* line, Node** n
 }
 
 Node* parse_node(const char* line) {
+    if(line == NULL)
+        return NULL;
     const char* questionStart = strstr(line, "\":\"");
     if (questionStart == NULL) {
         return NULL;
