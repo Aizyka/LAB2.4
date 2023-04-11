@@ -3,6 +3,18 @@
 #include <string.h>
 #include "../include/lib.h"
 
+void clearhistory(Node*** answers, int* answers_size) {
+    char answ[100];
+    printf("Clear history?\n");
+    scanf("%99s", answ);
+    if(strcmp(answ, "yes") == 0)
+    {
+        free(*answers);
+        *answers = malloc(sizeof(Node*));
+        *answers_size = 0;
+    }
+}
+
 int main() {
     Node* root = NULL;
     int working = 1;
@@ -19,18 +31,11 @@ int main() {
 
         switch (menu) {
             case 1:
+                if(answers_size > 0) {
+                    clearhistory(&answers,&answers_size);
+                }
                 if(root != NULL)
                 {
-                    if(answers_size > 0) {
-                        printf("Clear history?\n");
-                        scanf("%99s", path);
-                        if(strcmp(path, "yes") == 0)
-                        {
-                            free(answers);
-                            answers = malloc(sizeof(Node*));
-                            answers_size = 0;
-                        }
-                    }
                     play(root, &answers, &answers_size);
                 }
                 else
@@ -58,8 +63,8 @@ int main() {
         }
     }
     if(root != NULL) {
-        free(answers);
         clearmemory(root);
     }
+    free(answers);
     return 0;
 }

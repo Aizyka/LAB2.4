@@ -97,6 +97,62 @@ void save(Node* root, const char* filename) {
     }
 }
 
+int getend(const char* line) {
+    int c = 0;
+    int end = 0;
+    for(int i = 0; i < (int)strlen(line); i++) {
+        if(line[i] == '{')
+            c++;
+        if(line[i] == '}') {
+            c--;
+            if(c == 0) {
+                end = i;
+                break;
+            }
+        }
+    }
+    return end;
+}
+
+Node* parse_node(const char* line);
+
+void parse(const char* yesStart, const char* tocheck, const char* line, Node** node) {
+    if (yesStart != NULL && strcmp(tocheck,"yes") == 0) {
+        int end = getend(yesStart);
+
+        char* yesEnd = calloc(end-5, sizeof(char));
+        strncpy(yesEnd, yesStart+6, end - 5);
+        if (yesEnd != NULL) {
+            (*node)->yes = parse_node(yesEnd);
+            free(yesEnd);
+        }
+        char* afterYes = calloc(strlen(line)-end-2, sizeof(char));
+        strncpy(afterYes, yesStart+end+2, strlen(line)-end-2);
+        const char* noStart = strstr(afterYes, "\"no\":{");
+        if (noStart != NULL) {
+            end = getend(noStart);
+            char* noEnd = calloc(end-5, sizeof(char));
+            strncpy(noEnd, noStart+5, end - 4);
+            if (noEnd != NULL) {
+                (*node)->no = parse_node(noEnd);
+                free(noEnd);
+            }
+        }
+    }
+    else {
+        const char* noStart = strstr(line, "\"no\":{");
+        if (noStart != NULL) {
+            int end = getend(noStart);
+            char* noEnd = calloc(end-5, sizeof(char));
+            strncpy(noEnd, noStart+5, end - 5);
+            if (noEnd != NULL) {
+                (*node)->no = parse_node(noEnd);
+                free(noEnd);
+            }
+        }
+    }
+}
+
 Node* parse_node(const char* line) {
     const char* questionStart = strstr(line, "\":\"");
     if (questionStart == NULL) {
@@ -108,83 +164,18 @@ Node* parse_node(const char* line) {
         return NULL;
     }
     char* question = strndup(questionStart, questionEnd - questionStart);
-    Node* node = createNode(strdup(question));
+    Node* node = createNode(question);
     free(question);
     const char* yesStart = strstr(line, "\"yes\":{");
     char* tocheck = strndup(questionEnd+3, 3);
-    if (yesStart != NULL && strcmp(tocheck,"yes") == 0) {
-        int end = (int)strlen(yesStart);
-        int c = 0;
-        for(int i = 0; i < (int)strlen(yesStart); i++) {
-            if(yesStart[i] == '{')
-                c++;
-            if(yesStart[i] == '}') {
-                c--;
-                if(c == 0) {
-                    end = i;
-                    break;
-                }
-            }
-        }
-        char* yesEnd = calloc(end-6, sizeof(char));
-        strncpy(yesEnd, yesStart+6, end - 5);
-        if (yesEnd != NULL) {
-            node->yes = parse_node(yesEnd);
-        }
-        char* afterYes = calloc(strlen(line)-end-2, sizeof(char));
-        strncpy(afterYes, yesStart+end+2, strlen(line)-end-2);
-        const char* noStart = strstr(afterYes, "\"no\":{");
-        if (noStart != NULL) {
-            int end = (int)strlen(noStart);
-            int c = 0;
-            for(int i = 0; i < (int)strlen(noStart); i++) {
-                if(noStart[i] == '{')
-                    c++;
-                if(noStart[i] == '}') {
-                    c--;
-                    if(c == 0) {
-                        end = i;
-                        break;
-                    }
-                }
-            }
-            char* noEnd = calloc(end-5, sizeof(char));
-            strncpy(noEnd, noStart+5, end - 4);
-            if (noEnd != NULL) {
-                node->no = parse_node(noEnd);
-            }
-        }
-    }
-    else {
-        const char* noStart = strstr(line, "\"no\":{");
-        if (noStart != NULL) {
-            int end = (int)strlen(noStart);
-            int c = 0;
-            for(int i = 0; i < (int)strlen(noStart); i++) {
-                if(noStart[i] == '{')
-                    c++;
-                if(noStart[i] == '}') {
-                    c--;
-                    if(c == 0) {
-                        end = i;
-                        break;
-                    }
-                }
-            }
-            char* noEnd = calloc(end-5, sizeof(char));
-            strncpy(noEnd, noStart+5, end - 5);
-            if (noEnd != NULL) {
-                node->no = parse_node(noEnd);
-            }
-        }
-    }
+    parse(yesStart,tocheck,line,&node);
     free(tocheck);
     return node;
 }
 
 Node* loadFromFile(FILE* fp) {
-    char* line;
-    size_t len;
+    char* line = NULL;
+    size_t len = 0;
     if (getline(&line, &len, fp) == -1) {
         return NULL;
     }
