@@ -3,7 +3,7 @@
 #include <string.h>
 #include "../include/lib.h"
 
-void clearhistory(Node*** answers, int* answers_size) {
+void clearHistory(Node*** answers, int* answersSize) {
     char answ[100];
     printf("Clear history?\n");
     scanf("%99s", answ);
@@ -11,7 +11,7 @@ void clearhistory(Node*** answers, int* answers_size) {
     {
         free(*answers);
         *answers = malloc(sizeof(Node*));
-        *answers_size = 0;
+        *answersSize = 0;
     }
 }
 
@@ -19,11 +19,11 @@ int main() {
     Node* root = NULL;
     int working = 1;
     Node** answers = malloc(sizeof(Node*));
-    int answers_size = 0;
+    int answersSize = 0;
     while(working) {
         int menu = 0;
         char path[100];
-        printf("Menu:\n1 - Play\n2 - Show tree\n3 - Load\n4 - Save\n5 - Exit\n");
+        printf("\nMenu:\n1 - Play\n2 - Show tree\n3 - Load\n4 - Save\n5 - Exit\n");
         while(!scanf("%d", &menu) || menu < 1 || menu > 5) {
             printf("Invalid option!\n");
             rewind(stdin);
@@ -31,19 +31,19 @@ int main() {
 
         switch (menu) {
             case 1:
-                if(answers_size > 0) {
-                    clearhistory(&answers,&answers_size);
+                if(answersSize > 0) {
+                    clearHistory(&answers,&answersSize);
                 }
                 if(root != NULL)
                 {
-                    play(root, &answers, &answers_size);
+                    play(root, &answers, &answersSize);
                 }
                 else
                     printf("\033[31mError! Database not loaded\033[0m\n");
                 break;
             case 2:
                 if(root != NULL)
-                    print_tree(root, 0, answers, answers_size);
+                    printTree(root, 0, answers, answersSize);
                 else
                     printf("\033[31mError! Database not loaded\033[0m\n");
                 break;
@@ -63,7 +63,7 @@ int main() {
         }
     }
     if(root != NULL) {
-        clearmemory(root);
+        clearMemory(root);
     }
     free(answers);
     return 0;

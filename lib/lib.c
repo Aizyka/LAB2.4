@@ -27,7 +27,7 @@ void insert(Node* node, const char* question, const char* answer) {
     }
 }
 
-void play(Node* node, Node*** answers, int* answers_size) {
+void play(Node* node, Node*** answers, int* answersSize) {
     if(node->yes == NULL) {
         printf("Это %s?\n", node->question);
     }
@@ -35,39 +35,34 @@ void play(Node* node, Node*** answers, int* answers_size) {
         printf("%s\n", node->question);
     }
     char response[10];
-    scanf("%s", response);
-    if (strcmp(response, "yes") == 0) {
-        *answers = realloc(*answers, (*answers_size + 1)*sizeof(Node*));
-        (*answers)[*answers_size] = node;
-        (*answers_size)++;
+    while(strcmp(response,"да") != 0 && strcmp(response,"нет") != 0) {
+        scanf("%9s", response);
+    }
+    if (strcmp(response, "да") == 0) {
+        *answers = realloc(*answers, (*answersSize + 1)*sizeof(Node*));
+        (*answers)[*answersSize] = node;
+        (*answersSize)++;
         if(node->yes != NULL) {
-            play(node->yes, answers, answers_size);
+            play(node->yes, answers, answersSize);
         }
         else {
             printf("Я угадал!\n");
         }
-    } else if (strcmp(response, "no") == 0) {
+    } else if (strcmp(response, "нет") == 0) {
         if(node->no != NULL) {
-            play(node->no, answers, answers_size);
+            play(node->no, answers, answersSize);
         }
         else {
             printf("Я проиграл. Что это было?\n");
             char newObject[100];
             char newQuestion[100];
-            scanf("%99s", newObject);
+            scanf("%s", newObject);
             printf("Напишите вопрос, который можно задать, чтобы отличить %s от %s:\n", newObject, node->question);
-            scanf("%99s", newQuestion);
-            char temp[100];
-            strcpy(temp, node->question);
-            free(node->question);
-            node->question = strdup(newQuestion);
-            if (strcmp(response, "no") == 0) {
-                node->yes = createNode(newObject);
-                node->no = createNode(temp);
-            } else {
-                node->yes = createNode(temp);
-                node->no = createNode(newObject);
-            }
+            scanf(" %[^\n]s", newQuestion);
+            Node* newQuestionNode = createNode(newQuestion);
+            Node* newObjectNode = createNode(newObject);
+            newQuestionNode->yes = newObjectNode;
+            node->no = newQuestionNode;
         }
     }
 }
@@ -97,7 +92,7 @@ void save(Node* root, const char* filename) {
     }
 }
 
-int getend(const char* line) {
+int getEnd(const char* line) {
     int c = 0;
     int end = 0;
     for(int i = 0; i < (int)strlen(line); i++) {
@@ -114,28 +109,27 @@ int getend(const char* line) {
     return end;
 }
 
-Node* parse_node(const char* line);
+Node* parseNode(const char* line);
 
-void parse(const char* yesStart, const char* tocheck, const char* line, Node** node) {
-    if (yesStart != NULL && strcmp(tocheck,"yes") == 0) {
-        int end = getend(yesStart);
+void parse(const char* yesStart, const char* toCheck, const char* line, Node** node) {
+    if (yesStart != NULL && strcmp(toCheck,"yes") == 0) {
+        int end = getEnd(yesStart);
 
         char* yesEnd = calloc(end-5, sizeof(char));
         strncpy(yesEnd, yesStart+6, end - 5);
         if (yesEnd != NULL) {
-            (*node)->yes = parse_node(yesEnd);
+            (*node)->yes = parseNode(yesEnd);
             free(yesEnd);
         }
         char* afterYes = calloc(strlen(line)-end-2, sizeof(char));
         strncpy(afterYes, yesStart+end+2, strlen(line)-end-2);
         const char* noStart = strstr(afterYes, "\"no\":{");
-        free(afterYes);
         if (noStart != NULL) {
-            end = getend(noStart);
-            char* noEnd = calloc(end-4, sizeof(char));
+            end = getEnd(noStart);
+            char* noEnd = calloc(end-5, sizeof(char));
             strncpy(noEnd, noStart+5, end - 4);
             if (noEnd != NULL) {
-                (*node)->no = parse_node(noEnd);
+                (*node)->no = parseNode(noEnd);
                 free(noEnd);
             }
         }
@@ -143,20 +137,18 @@ void parse(const char* yesStart, const char* tocheck, const char* line, Node** n
     else {
         const char* noStart = strstr(line, "\"no\":{");
         if (noStart != NULL) {
-            int end = getend(noStart);
+            int end = getEnd(noStart);
             char* noEnd = calloc(end-5, sizeof(char));
             strncpy(noEnd, noStart+5, end - 5);
             if (noEnd != NULL) {
-                (*node)->no = parse_node(noEnd);
+                (*node)->no = parseNode(noEnd);
                 free(noEnd);
             }
         }
     }
 }
 
-Node* parse_node(const char* line) {
-    if(line == NULL)
-        return NULL;
+Node* parseNode(const char* line) {
     const char* questionStart = strstr(line, "\":\"");
     if (questionStart == NULL) {
         return NULL;
@@ -183,7 +175,7 @@ Node* loadFromFile(FILE* fp) {
         return NULL;
     }
 
-    return parse_node(line);
+    return parseNode(line);
 }
 
 Node* load(const char* filename) {
@@ -197,16 +189,15 @@ Node* load(const char* filename) {
     return root;
 }
 
-void print_tree(struct Node* root, int level, Node** answers, int answers_len) {
+void printTree(struct Node* root, int level, Node** answers, int answersLen) {
     if (root == NULL) {
         return;
     }
-    // print the question at this node
     for (int i = 0; i < level; i++) {
         printf("  ");
     }
     int founded = 0;
-    for(int i = 0; i < answers_len; i++) {
+    for(int i = 0; i < answersLen; i++) {
         if(answers[i] == root) {
             founded = 1;
             break;
@@ -216,19 +207,19 @@ void print_tree(struct Node* root, int level, Node** answers, int answers_len) {
         printf("\033[32m= %s\033[0m\n", root->question);
     else
         printf("\033[31m- %s\033[0m\n", root->question);
-    // print the yes and no subtrees recursively
-    print_tree(root->yes, level+1, answers, answers_len);
-    print_tree(root->no, level, answers, answers_len);
+
+    printTree(root->yes, level+1, answers, answersLen);
+    printTree(root->no, level, answers, answersLen);
 }
 
-void clearmemory(Node* node) {
+void clearMemory(Node* node) {
     if(node->question != NULL)
         free(node->question);
     if(node->yes != NULL) {
-        clearmemory(node->yes);
+        clearMemory(node->yes);
     }
     if(node->no != NULL) {
-        clearmemory(node->no);
+        clearMemory(node->no);
     }
     free(node);
 }
